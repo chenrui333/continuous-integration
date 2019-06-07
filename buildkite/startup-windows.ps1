@@ -123,13 +123,58 @@ disconnect-after-job-timeout=900
 [System.IO.File]::WriteAllLines("${buildkite_agent_root}\buildkite-agent.cfg", $buildkite_agent_config)
 
 ## Start the Buildkite agent service.
-try {
+$running = $true
+while ($running) {
+  try {
     Write-Host "Starting Buildkite agent as user ${buildkite_username}..."
     & nssm start "buildkite-agent"
 
     Write-Host "Waiting for Buildkite agent to exit..."
-    While ((Get-Service "buildkite-agent").Status -eq "Running") { Start-Sleep -Seconds 1 }
-} finally {
-    Write-Host "Buildkite agent has exited, shutting down."
-    Stop-Computer -Force
+    while ((Get-Service "buildkite-agent").Status -eq "Running") { Start-Sleep -Seconds 1 }
+  } finally {
+    Write-Host "Buildkite agent has exited, cleaning up."
+
+    # Kill all processes belonging to the Buildkite agent.
+    $count = 0
+    while ($running) {
+      $count += 1
+      $processes = Get-Process -IncludeUserName | Where UserName -match philwo
+      if (!$processes) {
+        break
+      }
+
+      Write-Host "Killing $($processes.Count) processes..."
+      $processes | Stop-Process -Force
+      Start-Sleep -Seconds 1
+
+      if ($count -gt 60) {
+        Write-Host "Could not kill all processes in 60 seconds, shutting down machine."
+        $running = $false
+        break
+      }
+    }
+
+    # Clean up files on disk.
+    $count = 0
+    while ($running) {
+      $count += 1
+
+      $files = Get-ChildItem -Path 'D:\b' -Recurse | Select -ExpandProperty FullName | Where {$_ -notlike 'D:\b\cache*'} | Sort Length -Descending
+      if (!$files) {
+        break
+      }
+
+      Write-Host "Deleting $($files.Count) files..."
+      $files | Remove-Item -Recurse -Force
+      Start-Sleep 1
+
+      if ($count -gt 60) {
+        Write-Host "Could not delete all files in 60 seconds, shutting down machine."
+        $running = $false
+        break
+      }
+    }
+  }
 }
+
+Stop-Computer -Force
