@@ -104,6 +104,8 @@ build-path="/var/lib/buildkite-agent/builds"
 git-mirrors-path="/var/lib/gitmirrors"
 hooks-path="/etc/buildkite-agent/hooks"
 plugins-path="/etc/buildkite-agent/plugins"
+disconnect-after-job=false
+disconnect-after-idle-timeout=900
 EOF
 
 # Add the Buildkite agent hooks.

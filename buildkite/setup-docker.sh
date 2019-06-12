@@ -75,24 +75,13 @@ EOF
   # first.
   systemctl disable buildkite-agent
 
-  cat > /usr/local/bin/shutdown_checker <<'EOF'
-#!/bin/bash
-set -euxo pipefail
-
-if /usr/bin/curl -sf -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/attributes/should_shutdown; then
-  systemctl disable buildkite-agent
-  systemctl stop buildkite-agent
-fi
-EOF
-  chmod +x /usr/local/bin/shutdown_checker
-
   mkdir /etc/systemd/system/buildkite-agent.service.d
   cat > /etc/systemd/system/buildkite-agent.service.d/override.conf <<'EOF'
 [Service]
 Restart=always
 PermissionsStartOnly=true
-# Check if we have to shutdown and if yes, do it.
-ExecStartPre=/usr/local/bin/shutdown_checker
+# Shut down the machine when the Buildkite Agent terminates.
+ExecStopPost=/usr/sbin/poweroff
 # Disable tasks accounting, because Bazel is prone to run into resource limits there.
 # This fixes the "cgroup: fork rejected by pids controller" error that some CI jobs triggered.
 TasksAccounting=no
