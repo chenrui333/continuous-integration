@@ -126,6 +126,15 @@ disconnect-after-job-timeout=900
 $running = $true
 while ($running) {
   try {
+    $response = Invoke-WebRequest -Headers @{'Metadata-Flavor' = 'Google'} -URI http://metadata.google.internal/computeMetadata/v1/instance/attributes/should_shutdown -ErrorAction Stop
+    # If the request succeeds, it means we have to shutdown, so let's exit.
+    $running = $false
+    break
+  } catch {
+    # Ignore the error.
+  }
+
+  try {
     Write-Host "Starting Buildkite agent as user ${buildkite_username}..."
     & nssm start "buildkite-agent"
 
@@ -148,8 +157,9 @@ while ($running) {
       Start-Sleep -Seconds 1
 
       if ($count -gt 60) {
-        Write-Host "Could not kill all processes in 60 seconds, shutting down machine."
+        Write-Host "Could not kill all processes in 60 seconds, rebooting the machine."
         $running = $false
+        Restart-Computer -Force
         break
       }
     }
@@ -169,8 +179,9 @@ while ($running) {
       Start-Sleep 1
 
       if ($count -gt 60) {
-        Write-Host "Could not delete all files in 60 seconds, shutting down machine."
+        Write-Host "Could not delete all files in 60 seconds, rebooting the machine."
         $running = $false
+        Restart-Computer -Force
         break
       }
     }
