@@ -36,8 +36,7 @@ def worker():
             # We take a few keys out of the config item. The rest is passed
             # as-is to create_instance_template() and thus to the gcloud
             # command line tool.
-            autoscaling = item.pop("autoscaling", False)
-            count = item.pop("count")
+            del item["count"]
             instance_group_name = item.pop("name")
             project = item.pop("project")
             zone = item.pop("zone", None)
@@ -73,22 +72,6 @@ def worker():
                     instance_group_name, template_name
                 )
             )
-
-            # Resize the instance group if necessary.
-            if not autoscaling:
-                kwargs = {"project": project, "size": count}
-                if zone is not None:
-                    kwargs["zone"] = zone
-                elif region is not None:
-                    kwargs["region"] = region
-                gcloud.resize_instance_group(instance_group_name, **kwargs)
-            else:
-                kwargs = {"project": project, "max_num_replicas": count}
-                if zone is not None:
-                    kwargs["zone"] = zone
-                elif region is not None:
-                    kwargs["region"] = region
-                gcloud.set_autoscaling_instance_group(instance_group_name, **kwargs)
         finally:
             WORK_QUEUE.task_done()
 
