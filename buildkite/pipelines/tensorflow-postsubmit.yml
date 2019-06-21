@@ -14,6 +14,7 @@ platforms:
     - yes '' | ./configure
     build_flags:
     - "--config=opt"
+    - "--host_force_python=PY2"
     # Suppress warning messages from all actions
     - "--output_filter=^$"
     build_targets:
@@ -37,6 +38,7 @@ platforms:
     - yes '' | python3 ./configure.py
     build_flags:
     - "--config=opt"
+    - "--host_force_python=PY2"
     # Suppress warning messages from all actions
     - "--output_filter=^$"
     build_targets:
@@ -48,6 +50,7 @@ platforms:
     - echo.| python ./configure.py
     build_flags:
     - "--config=opt"
+    - "--host_force_python=PY2"
     # Suppress warning messages from all actions
     - "--output_filter=^$"
     build_targets:
