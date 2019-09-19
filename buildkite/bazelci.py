@@ -1854,7 +1854,7 @@ def print_project_pipeline(
                 continue
             config_hashes.add(h)
 
-        shards = task_config.get("shards", "1")
+        shards = task_config.get("shards", "2")
         try:
             shards = int(shards)
         except ValueError:
